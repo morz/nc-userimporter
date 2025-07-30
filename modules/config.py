@@ -48,7 +48,7 @@ class ConfigReader:
         config_keys = [
             'cloudurl', 'adminname', 'adminpass', 'csvfile', 'csvdelimiter',
             'csvdelimitergroups', 'generatepassword', 'passwordlength',
-            'sslverify', 'language', 'pdf_one_file', 'pdf_single_files', 'loglevel', 'scriptlang'
+            'sslverify', 'language', 'pdf_one_file', 'pdf_only', 'pdf_single_files', 'loglevel', 'scriptlang'
         ]
 
         # Dictionary to hold key-value pairs from the XML configuration file

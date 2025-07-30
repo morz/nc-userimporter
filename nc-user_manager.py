@@ -41,6 +41,7 @@ def load_config(config_reader):
             'admin_pass': config_reader.get('adminpass'),
             'pdf_one_file': config_reader.get('pdf_one_file', 'yes'),
             'pdf_single_files': config_reader.get('pdf_single_files', 'yes'),
+            'pdf_only': config_reader.get('pdf_only', 'no'),
             'ssl_verify': config_reader.get('sslverify', 'True'),
             'user_language': config_reader.get('language', 'en'),
             'csv_delimiter': config_reader.get('csvdelimiter', ';'),
@@ -134,24 +135,30 @@ def create_users_and_groups(csv_data, config, nc_api):
             if not password and config['generate_password'] == 'yes':
                 password = PasswordGenerator(config['password_length']).generate()
 
-            logging.info(f"Creating user '{username}' with display name '{displayname}' and email '{email}'")
-            response = nc_api.add_user(username, password, displayname, email, groups, quota, config['user_language'])
-
-            if response:
-                logging.info(f"User '{username}' created successfully.")
+            if config['pdf_only'] == 'yes':
+                logging.info(f"Generating user '{username}' with display name '{displayname}'")
                 users_to_process.append({'username': username, 'password': password, 'displayname': displayname})
-
-                if groups:
-                    nc_api.sync_groups(username, set(groups))
-                if subadmin:
-                    nc_api.sync_subadmin_groups(username, set(subadmin))
             else:
-                logging.error(f"Failed to create user '{username}'")
+                logging.info(f"Creating user '{username}' with display name '{displayname}' and email '{email}'")
+                response = nc_api.add_user(username, password, displayname, email, groups, quota, config['user_language'])
+
+                if response:
+                    logging.info(f"User '{username}' created successfully.")
+                    users_to_process.append({'username': username, 'password': password, 'displayname': displayname})
+
+                    if groups:
+                        nc_api.sync_groups(username, set(groups))
+                    if subadmin:
+                        nc_api.sync_subadmin_groups(username, set(subadmin))
+                else:
+                    logging.error(f"Failed to create user '{username}'")
 
         except Exception as e:
             logging.error(f"Error while processing user '{username}': {str(e)}")
-
-    logging.info("User creation process completed.")
+    if config['pdf_only'] == 'no':
+        logging.info("User creation process completed.")
+    else:
+        logging.info("Users list generation process completed.")
     return users_to_process
 
 # Generate PDF-files
@@ -181,8 +188,14 @@ def generate_pdf_files(users_to_process, config, tmp_dir, output_dir):
 # Import new users from CSV
 def import_users(config, nc_api):
     try:
-        display_info_create_user_and_groups()
-        print(f"{language.get('nc_userimporter_press_continue', 'Missing translation string for: nc_userimporter_press_continue')}")
+        if config['pdf_only'] == 'yes':
+            print("###################################################################################")
+            print(f"{language.get('nc_userimporter_pdfonly_mode', 'Missing translation string for: nc_userimporter_pdfonly_mode')}")
+            print("###################################################################################")
+            print("")
+        else:
+            display_info_create_user_and_groups()
+            print(f"{language.get('nc_userimporter_press_continue', 'Missing translation string for: nc_userimporter_press_continue')}")
         input(f"{language.get('nc_userimporter_any_key', 'Missing translation string for: nc_userimporter_any_key')}")
 
         output_dir = 'output'
@@ -204,9 +217,14 @@ def import_users(config, nc_api):
         print(tabulate(usertable, headers="firstrow"))
         input(f"{language.get('nc_userimporter_any_key', 'Missing translation string for: nc_userimporter_any_key')}")
 
+        if config['pdf_only'] == 'yes':
+            logging.info("PDF generation mode activated. No users will be created, only PDF files will be generated.")
         users_to_process = create_users_and_groups(csv_data, config, nc_api)
         generate_pdf_files(users_to_process, config, tmp_dir, output_dir)
-        print(f"\n{language.get('nc_userimporter_user_creation_completed', 'Missing translation string for: nc_userimporter_user_creation_completed')}")
+        if config['pdf_only'] == 'yes':
+            print(f"\n{language.get('nc_userimporter_pdfonly_mode_done', 'Missing translation string for: nc_userimporter_pdfonly_mode_done')}")
+        else:
+            print(f"\n{language.get('nc_userimporter_user_creation_completed', 'Missing translation string for: nc_userimporter_user_creation_completed')}")
 
     except KeyboardInterrupt:
         print(f"\n{language.get('nc_userimporter_exit_program', 'Missing translation string for: nc_userimporter_exit_program')}")
