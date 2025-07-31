@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 from tabulate import tabulate
 from modules import ConfigReader, PasswordGenerator, NextcloudAPI, NextcloudUserManager, read_csv, generate_qr_code, generate_pdf, load_language, MAPPING
+from modules.output_handler import fetch_logo_and_site_name
 
 # Useful resources for contributors:
 # Nextcloud user API https://docs.nextcloud.com/server/latest/admin_manual/configuration_user/instruction_set_for_users.html
@@ -191,13 +192,15 @@ def generate_pdf_files(users_to_process, config, tmp_dir, output_dir):
         return
 
     today = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    # Получаем логотип и название сайта один раз
+    logo_path, bg_path, site_name = fetch_logo_and_site_name(config['base_url'], tmp_dir)
 
     if config['pdf_single_files'] == 'yes':
         for user in users_to_process:
             qr_code_path = generate_qr_code(f"nc://login/user:{user['username']}&password:{user['password']}&server:{config['base_url']}", tmp_dir, user['username'])
             if qr_code_path:
                 output_filepath = os.path.join(output_dir, f"{user['username']}_{today}.pdf")
-                generate_pdf({'username': user['username'], 'password': user['password'], 'displayname': user['displayname']}, qr_code_path, output_filepath, config['base_url'], language)
+                generate_pdf({'username': user['username'], 'password': user['password'], 'displayname': user['displayname']}, qr_code_path, output_filepath, config['base_url'], language, logo_path=logo_path, bg_path=bg_path, site_name=site_name)
             else:
                 logging.error(f"Failed to generate QR code for user {user['username']}. PDF generation skipped.")
 
@@ -206,7 +209,7 @@ def generate_pdf_files(users_to_process, config, tmp_dir, output_dir):
         output_filepath = os.path.join(output_dir, output_filename)
         for user in users_to_process:
             user['qr_code_path'] = generate_qr_code(f"nc://login/user:{user['username']}&password:{user['password']}&server:{config['base_url']}", tmp_dir, user['username'])
-        generate_pdf({'users': users_to_process}, "", output_filepath, config['base_url'], language, multi_user=True)
+        generate_pdf({'users': users_to_process}, "", output_filepath, config['base_url'], language, multi_user=True, logo_path=logo_path, bg_path=bg_path, site_name=site_name)
 
 # Import new users from CSV
 def import_users(config, nc_api):

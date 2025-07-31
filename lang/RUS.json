@@ -29,7 +29,7 @@
     "nc_userimporter_pdfonly_mode": "Тестовый режим: только генерация PDF, без отправки данных на API.",
     "nc_userimporter_pdfonly_mode_done": "Тестовый режим: PDF-файлы успешно сгенерированы.",
     "output_handler_greeting": "Здравствуйте",
-    "output_handler_account_created": "Для вас создан аккаунт Nextcloud.",
+    "output_handler_account_created": "Для вас создан аккаунт в системе:",
     "output_handler_login_instructions": "Вы можете войти, используя следующие учетные данные:",
     "output_handler_nc_url": "URL Nextcloud",
     "output_handler_username": "Имя пользователя",

@@ -29,7 +29,7 @@
     "nc_userimporter_pdfonly_mode": "Test mode: PDF generation only, without sending data to the API.",
     "nc_userimporter_pdfonly_mode_done": "Test mode: PDF files successfully generated.",
     "output_handler_greeting": "Hello",
-    "output_handler_account_created": "A Nextcloud account has been created for you.",
+    "output_handler_account_created": "An account has been created for you in the system:",
     "output_handler_login_instructions": "You can log in with the following credentials:",
     "output_handler_nc_url": "Nextcloud URL",
     "output_handler_username": "Username",
