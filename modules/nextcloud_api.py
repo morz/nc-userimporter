@@ -36,7 +36,7 @@ class NextcloudAPI:
             self.ssl_verify = False
             self.logger.info("SSL verification disabled")
 
-    def _request(self, method, endpoint, data=None, headers=None):
+    def _request(self, method, endpoint, data=None, headers=None, auth=None):
         """
         Helper method to send requests to the Nextcloud API.
 
@@ -53,7 +53,7 @@ class NextcloudAPI:
         headers = headers or self.headers
 
         try:
-            self.logger.debug(f"Requesting {method} {url} with data: {data}")
+            self.logger.debug("Requesting %s %s with data: %s", method, url, data)
             if method in ['POST', 'PUT']:
                 headers['Content-Type'] = 'application/x-www-form-urlencoded'
             
@@ -61,9 +61,10 @@ class NextcloudAPI:
                 method=method,
                 url=url,
                 headers=headers,
-                auth=self.auth,
+                auth=auth if auth else self.auth,
                 data=data,
-                verify=self.ssl_verify
+                verify=self.ssl_verify,
+                timeout=10  # Set a timeout for the request
             )
             response.raise_for_status()
 
@@ -176,11 +177,11 @@ class NextcloudAPI:
     
     def get_users(self):
         """Retrieve a list of all users from the Nextcloud server."""
-        return self._request('GET', 'ocs/v1.php/cloud/users')
+        return self._request('GET', 'ocs/v2.php/cloud/users')
 
     def get_user(self, username):
         """Retrieve details of a specific user by username."""
-        return self._request('GET', f'ocs/v1.php/cloud/users/{username}')
+        return self._request('GET', f'ocs/v2.php/cloud/users/{username}')
 
     def add_user(self, username, password, display_name, email, groups, quota, language):
         """
@@ -208,7 +209,7 @@ class NextcloudAPI:
             return False
 
         # Now that the groups are ensured, add the user
-        response = self._request('POST', 'ocs/v1.php/cloud/users', data=data)
+        response = self._request('POST', 'ocs/v2.php/cloud/users', data=data)
 
         if self.is_successful(response):
             self.logger.info(f"User '{username}' successfully added.")
@@ -236,7 +237,7 @@ class NextcloudAPI:
         }
         
         # Perform the API request using the correct endpoint for user updates
-        response = self._request('PUT', f'ocs/v1.php/cloud/users/{username}', data=data)
+        response = self._request('PUT', f'ocs/v2.php/cloud/users/{username}', data=data)
 
         # Handle the response based on type and content
         if isinstance(response, dict):
@@ -257,28 +258,28 @@ class NextcloudAPI:
 
     def disable_user(self, username):
         """Disable the specified user by username."""
-        return self._request('PUT', f'ocs/v1.php/cloud/users/{username}/disable')
+        return self._request('PUT', f'ocs/v2.php/cloud/users/{username}/disable')
 
     def enable_user(self, username):
         """Enable the specified user by username."""
-        return self._request('PUT', f'ocs/v1.php/cloud/users/{username}/enable')
+        return self._request('PUT', f'ocs/v2.php/cloud/users/{username}/enable')
 
     def delete_user(self, username):
         """Delete the specified user by username."""
-        return self._request('DELETE', f'ocs/v1.php/cloud/users/{username}')
+        return self._request('DELETE', f'ocs/v2.php/cloud/users/{username}')
     
     
     # Group Management Functions
  
     def get_groups(self):
         """Retrieve a list of all groups from the Nextcloud server."""
-        return self._request('GET', 'ocs/v1.php/cloud/groups') 
+        return self._request('GET', 'ocs/v2.php/cloud/groups') 
     
     def get_user_groups(self, username):
         """
         Retrieve the groups a specific user belongs to by username and return them as a list.
         """
-        response = self._request('GET', f'ocs/v1.php/cloud/users/{username}/groups')
+        response = self._request('GET', f'ocs/v2.php/cloud/users/{username}/groups')
         if self.is_successful(response):
             return self.parse_groups_from_response(response['response'])
         else:
@@ -287,7 +288,7 @@ class NextcloudAPI:
  
     def create_groups(self, groups):
         """Create new groups on the Nextcloud server."""
-        return [self._request('POST', 'ocs/v1.php/cloud/groups', data={'groupid': group}) for group in groups]
+        return [self._request('POST', 'ocs/v2.php/cloud/groups', data={'groupid': group}) for group in groups]
            
     def ensure_groups_exist(self, groups):
         """
@@ -323,7 +324,7 @@ class NextcloudAPI:
 
     def add_user_to_groups(self, username, groups):
         """Add the specified user to one or more groups."""
-        responses = [self._request('POST', f'ocs/v1.php/cloud/users/{username}/groups', data={'groupid': group}) for group in groups]
+        responses = [self._request('POST', f'ocs/v2.php/cloud/users/{username}/groups', data={'groupid': group}) for group in groups]
         return all(self.is_successful(response) for response in responses)
 
     def remove_user_from_groups(self, username, groups):
@@ -338,7 +339,7 @@ class NextcloudAPI:
             bool: True if the user was successfully removed from all groups, False otherwise.
         """
         for group in groups:
-            response = self._request('DELETE', f'ocs/v1.php/cloud/users/{username}/groups?groupid={group}')
+            response = self._request('DELETE', f'ocs/v2.php/cloud/users/{username}/groups?groupid={group}')
             if not self.is_successful(response):
                 self.logger.error(f"Failed to remove {username} from group '{group}': {response.get('message')}")
                 return False
@@ -386,13 +387,11 @@ class NextcloudAPI:
         current_groups = set(self.get_user_groups(username))
         return self.sync_user_to_groups(username, current_groups, new_groups)
     
-    
     # Subadmin-Group Management Functions
         
-    
     def get_user_subadmin_groups(self, username):
         """Retrieve the groups in which the specified user is a subadmin."""
-        response = self._request('GET', f'ocs/v1.php/cloud/users/{username}/subadmins')
+        response = self._request('GET', f'ocs/v2.php/cloud/users/{username}/subadmins')
         if self.is_successful(response):
             return self.parse_groups_from_response(response['response'])
         else:
@@ -417,7 +416,7 @@ class NextcloudAPI:
 
         # Proceed to promote the user to subadmin in each group
         for group in groups:
-            response = self._request('POST', f'ocs/v1.php/cloud/users/{username}/subadmins', data={'groupid': group})
+            response = self._request('POST', f'ocs/v2.php/cloud/users/{username}/subadmins', data={'groupid': group})
             if not self.is_successful(response):
                 self.logger.error(f"Failed to promote {username} to subadmin in group '{group}': {response.get('message')}")
                 return False
@@ -426,7 +425,7 @@ class NextcloudAPI:
     def demote_user_in_group(self, username, groups):
         """Demote the specified user from subadmin in one or more groups."""
         # DELETE requests should send groupid in the URL, not as data
-        return [self._request('DELETE', f'ocs/v1.php/cloud/users/{username}/subadmins?groupid={group}') for group in groups]   
+        return [self._request('DELETE', f'ocs/v2.php/cloud/users/{username}/subadmins?groupid={group}') for group in groups]   
     
     def sync_subadmin_groups(self, username, new_subadmin_groups):
         """
@@ -477,5 +476,29 @@ class NextcloudAPI:
 
     def resend_welcome_mail(self, username):
         """Resend the welcome email to the specified user."""
-        return self._request('POST', f'ocs/v1.php/cloud/users/{username}/welcome')
+        return self._request('POST', f'ocs/v2.php/cloud/users/{username}/welcome')
 
+    def get_app_password(self, user=None, user_password=None):
+        
+        auth = (user, user_password) if user and user_password else self.auth
+        response = self._request('GET', 'ocs/v2.php/core/getapppassword', auth=auth)
+        if response['status_code'] == 200:
+            try:
+                root = etree.fromstring(response['response'].content)
+            except Exception as e:
+                self.logger.error(f"Ошибка парсинга XML при получении app password: {e}")
+                return {'status_code': 102, 'message': 'XML parsing error', 'response': response['response']}
+            password = None
+            if root is not None:
+                password = root.findtext('.//apppassword')
+            if password:
+                return {'status_code': 100, 'apppassword': password, 'response': response['response']}
+            else:
+                self.logger.warning("App password not found in response XML.")
+                return {'status_code': 101, 'message': 'App password not found in response', 'response': response['response']}
+        else:
+            return {
+                'status_code': response.get('status_code', 500),
+                'message': response.get('message', 'Unknown error'),
+                'response': response.get('response')
+            }

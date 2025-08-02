@@ -195,9 +195,11 @@ def generate_pdf_files(users_to_process, config, tmp_dir, output_dir):
     # Получаем логотип и название сайта один раз
     logo_path, bg_path, site_name = fetch_logo_and_site_name(config['base_url'], tmp_dir)
 
+    server_url = f"https://{config['base_url']}" if not config['base_url'].startswith("https") else config['base_url']
+    
     if config['pdf_single_files'] == 'yes':
         for user in users_to_process:
-            qr_code_path = generate_qr_code(f"nc://login/user:{user['username']}&password:{user['password']}&server:{config['base_url']}", tmp_dir, user['username'])
+            qr_code_path = generate_qr_code(f"nc://login/user:{user['username']}&password:{user['qr_app_password']}&server:{server_url}", tmp_dir, user['username'])
             if qr_code_path:
                 output_filepath = os.path.join(output_dir, f"{user['username']}_{today}.pdf")
                 generate_pdf({'username': user['username'], 'password': user['password'], 'displayname': user['displayname']}, qr_code_path, output_filepath, config['base_url'], language, logo_path=logo_path, bg_path=bg_path, site_name=site_name)
@@ -208,7 +210,7 @@ def generate_pdf_files(users_to_process, config, tmp_dir, output_dir):
         output_filename = f"userlist_{today}.pdf"
         output_filepath = os.path.join(output_dir, output_filename)
         for user in users_to_process:
-            user['qr_code_path'] = generate_qr_code(f"nc://login/user:{user['username']}&password:{user['password']}&server:{config['base_url']}", tmp_dir, user['username'])
+            user['qr_code_path'] = generate_qr_code(f"nc://login/user:{user['username']}&password:{user['qr_app_password']}&server:{server_url}", tmp_dir, user['username'])
         generate_pdf({'users': users_to_process}, "", output_filepath, config['base_url'], language, multi_user=True, logo_path=logo_path, bg_path=bg_path, site_name=site_name)
 
 # Import new users from CSV
@@ -236,7 +238,7 @@ def import_users(config, nc_api):
         usertable = [["Username", "Display name", "Password", "Email", "Groups", "Group admin for", "Quota"]]
         for row in csv_data:
             pass_anon = "*" * len(html.escape(row['password'])) if row['password'] else "Not set"
-            row['username'] = html.escape(row['username']).translate(MAPPING)
+            row['username'] = html.escape(row['username'].lower()).translate(MAPPING)
             quota = html.escape(row['quota']) if row['quota'] is not None else ''
             usertable.append([row['username'], row['displayname'], pass_anon, row['email'], row['groups'], row['subadmin'], quota])
 
