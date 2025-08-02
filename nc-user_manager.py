@@ -133,26 +133,49 @@ def create_users_and_groups(csv_data, config, nc_api):
             quota = row.get('quota', '1GB')
 
             if not password and config['generate_password'] == 'yes':
-                password = PasswordGenerator(config['password_length']).generate()
+                password = PasswordGenerator.generate(config['password_length'])
 
             if config['pdf_only'] == 'yes':
-                logging.info(f"Generating user '{username}' with display name '{displayname}'")
-                users_to_process.append({'username': username, 'password': password, 'displayname': displayname})
-            else:
-                logging.info(f"Creating user '{username}' with display name '{displayname}' and email '{email}'")
-                response = nc_api.add_user(username, password, displayname, email, groups, quota, config['user_language'])
-
+                response = nc_api.get_user(username)
                 if response:
-                    logging.info(f"User '{username}' created successfully.")
-                    users_to_process.append({'username': username, 'password': password, 'displayname': displayname})
-
-                    if groups:
-                        nc_api.sync_groups(username, set(groups))
-                    if subadmin:
-                        nc_api.sync_subadmin_groups(username, set(subadmin))
+                    app_password_resp = nc_api.get_app_password(user=username, user_password=password)
+                    if app_password_resp and app_password_resp.get('status_code') == 100:
+                        app_password = app_password_resp.get('apppassword')
+                    else:
+                        logging.warning("Не удалось получить app password для пользователя %s. QR-код будет с обычным паролем.", username)
+                        app_password = password
+                    users_to_process.append({
+                        'username': username,
+                        'password': password,  # В PDF поле пароль — обычный
+                        'displayname': displayname,
+                        'email': email,
+                        'groups': ','.join(groups),
+                        'subadmin': ','.join(subadmin),
+                        'quota': quota,
+                        'qr_app_password': app_password  # Для QR-кода
+                    })
+            else:
+                # Создаем пользователя через API
+                response = nc_api.add_user(username, password, displayname, email, groups, quota, config['user_language'])
+                if response:
+                    app_password_resp = nc_api.get_app_password(user=username, user_password=password)
+                    if app_password_resp and app_password_resp.get('status_code') == 100:
+                        app_password = app_password_resp.get('apppassword')
+                    else:
+                        logging.warning("Не удалось получить app password для пользователя %s. QR-код будет с обычным паролем.", username)
+                        app_password = password
+                    users_to_process.append({
+                        'username': username,
+                        'password': password,  # В PDF поле пароль — обычный
+                        'displayname': displayname,
+                        'email': email,
+                        'groups': ','.join(groups),
+                        'subadmin': ','.join(subadmin),
+                        'quota': quota,
+                        'qr_app_password': app_password  # Для QR-кода
+                    })
                 else:
-                    logging.error(f"Failed to create user '{username}'")
-
+                    logging.error("Ошибка при создании пользователя %s через API.", username)
         except Exception as e:
             logging.error(f"Error while processing user '{username}': {str(e)}")
     if config['pdf_only'] == 'no':
