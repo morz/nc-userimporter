@@ -26,6 +26,8 @@
     "nc_userimporter_enter_choice": "Enter your choice (1/2/3):",
     "nc_userimporter_invalid_choice": "Invalid choice, please try again.",
     "nc_userimporter_attention_no_password_set": "ATTENTION: You have specified that users for whom no password has been entered will receive an e-mail to set a password for themselves. Please make absolutely sure that a correct e-mail address is entered for every user for whom no password has been set!",
+    "nc_userimporter_pdfonly_mode": "Test mode: PDF generation only, without sending data to the API.",
+    "nc_userimporter_pdfonly_mode_done": "Test mode: PDF files successfully generated.",
     "output_handler_greeting": "Hello",
     "output_handler_account_created": "A Nextcloud account has been created for you.",
     "output_handler_login_instructions": "You can log in with the following credentials:",

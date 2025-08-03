@@ -1,7 +1,8 @@
 <config>
     <!-- General-Settings -->
     <scriptlang>ENG</scriptlang>   <!-- Language of this script and the greeting-text on your pdf-files. Currently supported: German (GER), English (ENG), French (FRA), Spanish (SPA) -->
-    
+    <pdf_only>no</pdf_only> <!-- choose 'yes' if you want to create a pdf-file with the user data without send data to api server -->
+
     <!-- Sensitive data! Delete this information after successful data import -->
     <cloudurl>mycloud.mydomain.org</cloudurl> <!-- CHANGE THIS to your cloud domain, e.g. mycloud.mydomain.org or www.mydomain.org/mycloud (without https://) -->
     <adminname>Cloudadmin</adminname> <!-- CHANGE THIS to your cloud user, who has admin permissions-->
