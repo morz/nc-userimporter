@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import codecs
 import logging
 
+
 class ConfigReader:
     """
     ConfigReader is responsible for loading and parsing an XML-based configuration file.
@@ -25,14 +26,16 @@ class ConfigReader:
 
         Returns:
             dict: A dictionary of configuration keys and their corresponding values.
-        
+
         Raises:
             FileNotFoundError: If the config file does not exist.
             UnicodeDecodeError: If there is an issue reading the file in UTF-8 encoding.
         """
         try:
             # Open the config file with UTF-8 encoding using the codecs module
-            with codecs.open(self.config_file, mode='r', encoding='utf-8') as configfile:
+            with codecs.open(
+                self.config_file, mode="r", encoding="utf-8"
+            ) as configfile:
                 config_content = configfile.read()
         except FileNotFoundError:
             logging.error(f"Configuration file '{self.config_file}' not found.")
@@ -46,9 +49,22 @@ class ConfigReader:
 
         # Define the expected configuration keys in the XML file
         config_keys = [
-            'cloudurl', 'adminname', 'adminpass', 'csvfile', 'csvdelimiter',
-            'csvdelimitergroups', 'generatepassword', 'passwordlength',
-            'sslverify', 'language', 'pdf_one_file', 'pdf_only', 'pdf_single_files', 'loglevel', 'scriptlang'
+            "cloudurl",
+            "adminname",
+            "adminpass",
+            "csvfile",
+            "csvdelimiter",
+            "csvdelimitergroups",
+            "generatepassword",
+            "create_apppassword",
+            "passwordlength",
+            "sslverify",
+            "language",
+            "pdf_one_file",
+            "pdf_only",
+            "pdf_single_files",
+            "loglevel",
+            "scriptlang",
         ]
 
         # Dictionary to hold key-value pairs from the XML configuration file
@@ -57,8 +73,12 @@ class ConfigReader:
         # Extract values for the expected configuration keys from the XML
         for key in config_keys:
             element = config_xmlsoup.find(key)  # Find the XML tag by key name
-            if element and element.string:  # Check if the element exists and contains text
-                config_values[key] = element.string.strip()  # Store value without surrounding whitespace
+            if (
+                element and element.string
+            ):  # Check if the element exists and contains text
+                config_values[key] = (
+                    element.string.strip()
+                )  # Store value without surrounding whitespace
             else:
                 logging.warning(f"Element <{key}> not found or has no text content.")
 
@@ -84,10 +104,14 @@ class ConfigReader:
         if value is None:
             if fallback is not None:
                 # Log a warning if we fall back to the default value
-                logging.warning(f"Configuration key '{key}' not found. Using fallback value '{fallback}'.")
+                logging.warning(
+                    f"Configuration key '{key}' not found. Using fallback value '{fallback}'."
+                )
                 return fallback
             else:
                 # Log an error and raise an exception if no fallback is provided
-                logging.error(f"Configuration key '{key}' is missing and no fallback was provided.")
+                logging.error(
+                    f"Configuration key '{key}' is missing and no fallback was provided."
+                )
                 raise KeyError(f"Missing configuration key: {key}")
         return value

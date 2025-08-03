@@ -190,13 +190,13 @@ def generate_pdf(
             alignment=TA_JUSTIFY,
             fontName=custom_font,
             fontSize=12,
-            textColor=colors.white,
+            textColor=colors.black,
         )
     )
     styles["Normal"].fontName = custom_font
-    styles["Normal"].textColor = colors.white
+    styles["Normal"].textColor = colors.black
     styles["Heading1"].fontName = custom_font
-    styles["Heading1"].textColor = colors.white
+    styles["Heading1"].textColor = colors.black
 
     if multi_user:
         for user in user_data["users"]:
@@ -283,11 +283,11 @@ def add_greeting_and_password(story, styles, user_data, lang, site_name, config_
     # Adds a greeting
     displayname = user_data.get("displayname", "").strip() or user_data["username"]
     ptext = f"<font size=14>{lang.get('output_handler_greeting', 'Missing translation string for: output_handler_greeting')} {displayname},</font>"
-    story.append(Paragraph(ptext, styles["Justify"]))
+    story.append(Paragraph(ptext, styles["Normal"]))
     story.append(Spacer(1, 12))
     # Adds a message about account creation
     ptext = f"<font size=14>{lang.get('output_handler_account_created', 'Missing translation string for: output_handler_account_created')} {site_name}</font>"
-    story.append(Paragraph(ptext, styles["Justify"]))
+    story.append(Paragraph(ptext, styles["Normal"]))
     story.append(Spacer(1, 12))
     # Instructions for login
     ptext = f"<font size=14>{lang.get('output_handler_login_instructions', 'Missing translation string for: output_handler_login_instructions')}</font>"
