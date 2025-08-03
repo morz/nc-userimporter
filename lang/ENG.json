@@ -35,6 +35,7 @@
     "output_handler_username": "Username",
     "output_handler_password": "Password",
     "output_handler_qr_code_alternative": "Alternatively, you can scan the following QR code in the Nextcloud app:",
+    "output_handler_download_app": "Download the Nextcloud Talk app for your device:",
     "user_sync_fetched_nextcloud_users": "Fetched users from Nextcloud",
     "user_sync_deleted_users_detected": "Deleted users detected",
     "user_sync_skip_admin": "Skipping deletion because user belongs to the admin group",

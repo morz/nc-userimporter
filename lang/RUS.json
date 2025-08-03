@@ -35,6 +35,7 @@
     "output_handler_username": "Имя пользователя",
     "output_handler_password": "Пароль",
     "output_handler_qr_code_alternative": "Или вы можете отсканировать следующий QR-код в приложении Nextcloud:",
+    "output_handler_download_app": "Скачайте приложение Nextcloud Talk для вашего устройства:",
     "user_sync_fetched_nextcloud_users": "Получены пользователи из Nextcloud",
     "user_sync_deleted_users_detected": "Обнаружены удаленные пользователи",
     "user_sync_skip_admin": "Пропуск удаления, так как пользователь принадлежит к группе администраторов",
