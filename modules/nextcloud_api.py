@@ -1,7 +1,8 @@
-import requests
 import logging
-from lxml import etree
+
 import certifi
+import requests
+from lxml import etree
 
 
 class NextcloudAPI:
@@ -215,7 +216,7 @@ class NextcloudAPI:
 
         if existing_user and existing_user["status_code"] == 100:
             self.logger.info(
-                f"User '{username}' already exists. Skipping user creation."
+                "User '%s' already exists. Skipping user creation.", username
             )
             return False
 
@@ -231,7 +232,7 @@ class NextcloudAPI:
         # Ensure the groups exist before adding the user
         if not self.ensure_groups_exist(groups):
             self.logger.error(
-                f"Failed to create necessary groups for user '{username}'."
+                "Failed to create necessary groups for user '%s'.", username
             )
             return False
 
@@ -239,11 +240,11 @@ class NextcloudAPI:
         response = self._request("POST", "ocs/v2.php/cloud/users", data=data)
 
         if self.is_successful(response):
-            self.logger.info(f"User '{username}' successfully added.")
+            self.logger.info("User '%s' successfully added.", username)
             return True
         else:
             self.logger.error(
-                f"Failed to add user '{username}': {response.get('message')}"
+                "Failed to add user '%s': %s", username, response.get('message')
             )
             return False
 
@@ -319,7 +320,7 @@ class NextcloudAPI:
         if self.is_successful(response):
             return self.parse_groups_from_response(response["response"])
         else:
-            self.logger.error(f"Failed to fetch groups for user '{username}'")
+            self.logger.error("Failed to fetch groups for user '%s'", username)
             return []
 
     def create_groups(self, groups):
@@ -353,15 +354,15 @@ class NextcloudAPI:
         # Create groups that don't exist
         for group in groups:
             if group not in existing_groups:
-                self.logger.info(f"Group '{group}' does not exist. Creating it...")
+                self.logger.info("Group '%s' does not exist. Creating it...", group)
                 group_creation_response = self.create_groups([group])
                 if not self.is_successful(group_creation_response[0]):
                     self.logger.info(
-                        f"Failed to create group '{group}': {group_creation_response[0].get('message')}"
+                        "Failed to create group '%s': %s", group, group_creation_response[0].get('message')
                     )
                     return False
                 else:
-                    self.logger.info(f"Group '{group}' created successfully.")
+                    self.logger.info("Group '%s' created successfully.", group)
 
         return True
 
@@ -416,23 +417,23 @@ class NextcloudAPI:
 
         # Ensure that all groups to add exist, create them if necessary
         if groups_to_add:
-            logging.info(f"Ensuring that the following groups exist: {groups_to_add}")
+            self.logger.info("Ensuring that the following groups exist: %s", groups_to_add)
             if not self.ensure_groups_exist(groups_to_add):
-                logging.error(f"Failed to ensure all groups exist for {username}.")
+                self.logger.error("Failed to ensure all groups exist for %s.", username)
                 return False
 
         # Add the user to new groups
         if groups_to_add:
-            logging.info(f"Adding {username} to groups: {groups_to_add}")
+            self.logger.info("Adding %s to groups: %s", username, groups_to_add)
             if not self.add_user_to_groups(username, groups_to_add):
-                logging.error(f"Failed to add {username} to groups.")
+                self.logger.error("Failed to add %s to groups.", username)
                 return False
 
         # Remove the user from groups that are no longer assigned
         if groups_to_remove:
-            logging.info(f"Removing {username} from groups: {groups_to_remove}")
+            self.logger.info("Removing %s from groups: %s", username, groups_to_remove)
             if not self.remove_user_from_groups(username, groups_to_remove):
-                logging.error(f"Failed to remove {username} from groups.")
+                self.logger.error("Failed to remove %s from groups.", username)
                 return False
 
         return True
@@ -449,7 +450,7 @@ class NextcloudAPI:
         if self.is_successful(response):
             return self.parse_groups_from_response(response["response"])
         else:
-            self.logger.error(f"Failed to fetch subadmin groups for user '{username}'")
+            self.logger.error("Failed to fetch subadmin groups for user '%s'", username)
             return []
 
     def promote_user_in_group(self, username, groups):
@@ -466,7 +467,7 @@ class NextcloudAPI:
         # Ensure that all groups exist before promoting the user
         if not self.ensure_groups_exist(groups):
             self.logger.error(
-                f"Failed to ensure all groups exist for promoting {username} to subadmin."
+                "Failed to ensure all groups exist for promoting %s to subadmin.", username
             )
             return False
 
@@ -479,7 +480,7 @@ class NextcloudAPI:
             )
             if not self.is_successful(response):
                 self.logger.error(
-                    f"Failed to promote {username} to subadmin in group '{group}': {response.get('message')}"
+                    "Failed to promote %s to subadmin in group '%s': %s", username, group, response.get('message')
                 )
                 return False
         return True
@@ -512,28 +513,32 @@ class NextcloudAPI:
         # Ensure all groups to add exist
         if subadmin_to_add:
             self.logger.info(
-                f"Ensuring that the following groups exist for subadmin promotion: {subadmin_to_add}"
+                "Ensuring that the following groups exist for subadmin promotion: %s",
+                subadmin_to_add
             )
             if not self.ensure_groups_exist(subadmin_to_add):
                 self.logger.error(
-                    f"Failed to ensure groups exist for subadmin promotion for {username}."
+                    "Failed to ensure groups exist for subadmin promotion for %s.",
+                    username
                 )
                 return False
 
         if subadmin_to_add:
             self.logger.info(
-                f"Promoting {username} to subadmin of groups: {subadmin_to_add}"
+                "Promoting %s to subadmin of groups: %s",
+                username, subadmin_to_add
             )
             if not self.promote_user_in_group(username, subadmin_to_add):
-                self.logger.error(f"Failed to promote {username} to subadmin.")
+                self.logger.error("Failed to promote %s to subadmin.", username)
                 return False
 
         if subadmin_to_remove:
             self.logger.info(
-                f"Demoting {username} from subadmin of groups: {subadmin_to_remove}"
+                "Demoting %s from subadmin of groups: %s",
+                username, subadmin_to_remove
             )
             if not self.demote_user_in_group(username, subadmin_to_remove):
-                self.logger.error(f"Failed to demote {username} from subadmin.")
+                self.logger.error("Failed to demote %s from subadmin.", username)
                 return False
 
         return True

@@ -1,21 +1,15 @@
 #!/usr/bin/env python3
-import os
-import sys
 import html
 import logging
+import os
+import sys
 from datetime import datetime
+
 from tabulate import tabulate
-from modules import (
-    ConfigReader,
-    PasswordGenerator,
-    NextcloudAPI,
-    NextcloudUserManager,
-    read_csv,
-    generate_qr_code,
-    generate_pdf,
-    load_language,
-    MAPPING,
-)
+
+from modules import (MAPPING, ConfigReader, NextcloudAPI, NextcloudUserManager,
+                     PasswordGenerator, generate_pdf, generate_qr_code,
+                     load_language, read_csv)
 from modules.output_handler import fetch_logo_and_site_name
 
 # Useful resources for contributors:
